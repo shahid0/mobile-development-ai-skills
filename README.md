@@ -177,7 +177,123 @@ cp -R mobile-development-ai-skills/swiftui-modern-reviewer ~/.codex/skills/
 
 Restart Codex after installation so the new skills are discovered.
 
+## AGENTS.md Creation/Update Prompt
+
+Use this prompt to create or update a root-level `AGENTS.md` in mobile app repositories that use these skills.
+
+```text
+This is a meta-prompt. Do not copy this prompt into AGENTS.md. Do not produce a transcript of your research. Use your research to write a clean, future-facing AGENTS.md that tells future agents how to work in this repository.
+
+Core goal:
+Generate a customized AGENTS.md that encodes durable project rules, required plugins, required MCP tool preferences, required skills, architecture expectations, and verification expectations. The final AGENTS.md should read like project operating rules, not like a research report.
+
+Research the repo first:
+- Inspect the repository structure.
+- Detect whether the repo is Swift/SwiftUI/iOS, Dart/Flutter, mixed, package-based, app-based, monorepo, or other.
+- Check existing AGENTS.md files and preserve useful project-specific rules.
+- Discover available relevant plugins, MCP tools, and skills.
+- For Apple-platform repos, explicitly check for Build iOS Apps capabilities and XcodeBuildMCP.
+- For Dart/Flutter repos, explicitly check for Build Flutter Apps capabilities and Dart/Flutter MCP tools.
+- Inspect README, package manifests, Xcode project/workspace files, Package.swift, pubspec.yaml, analysis_options.yaml, Makefile, scripts, and CI only to understand repo-specific workflows.
+- Do not turn discovered commands into AGENTS.md content unless they are the repo’s intended workflow and no better plugin/MCP workflow exists.
+
+Critical writing rules:
+- The final AGENTS.md must be concise and future-facing.
+- Do not include research notes, verified metadata dumps, target lists, scheme lists, or exploratory command output unless future agents truly need them.
+- Do not include raw shell commands when an MCP/plugin workflow is available for that task.
+- Do not write fallback shell commands preemptively. Say to use the closest safe fallback only if the preferred plugin/MCP tool is unavailable, misconfigured, or fails.
+- Do not invent commands.
+- Do not copy skill contents, checklists, references, examples, or detailed skill rules into AGENTS.md.
+- Refer to skills by name only, not local filesystem paths.
+- Ask the user before adding optional relevant skills beyond the required ones. Do not mention rejected optional skills in AGENTS.md.
+
+Required tool policy for generated AGENTS.md:
+- For Swift, SwiftUI, iOS, widgets, simulator, build, run, test, debugging, profiling, memory, UI automation, screenshots, logs, or Apple-platform work:
+  - Require future agents to use relevant Build iOS Apps plugin capabilities when available.
+  - Require future agents to prefer XcodeBuildMCP over shell commands when available.
+  - Mention XcodeBuildMCP as the primary path for project discovery, build, run, test, simulator, launch, logs, screenshots, UI automation, debugging, and Swift Package workflows.
+  - Do not include xcodebuild shell commands unless XcodeBuildMCP is unavailable and the repo explicitly documents shell commands as the intended workflow.
+
+- For Dart or Flutter work:
+  - Require future agents to use relevant Build Flutter Apps plugin capabilities when available.
+  - Require future agents to prefer Dart/Flutter MCP tools over shell commands when available.
+  - Mention Dart/Flutter MCP tools as the primary path for analyze, test, run, hot reload, runtime errors, app inspection, and Flutter validation.
+  - Do not include flutter/dart shell commands unless MCP tools are unavailable and the repo explicitly documents shell commands as the intended workflow.
+
+Required skills:
+- For Flutter or Dart work, require:
+  - `flutter-modern-reviewer`
+  - `flutter-dart-performance`
+- For Swift or SwiftUI work, require:
+  - `swiftui-modern-reviewer`
+  - `performant-swift-swiftui`
+- For Swift or SwiftUI localization work, require:
+  - `swift-swiftui-localization`
+- The AGENTS.md must say that agents load and apply these skills directly when relevant.
+- The AGENTS.md must say not to copy skill contents into the file.
+
+Required architecture rule:
+Include this exact sentence:
+"Enforce focused architecture: every file has one clear role. New responsibilities require new files. God files, god classes, god screens, and dumping-ground utilities are strictly forbidden."
+
+Also include concise, repo-relevant architecture guidance:
+- Split UI composition, state models, domain logic, service access, formatting, navigation coordination, localization, persistence, and side effects into separate focused types when they are distinct responsibilities.
+- Prefer small, behavior-preserving refactors that clarify ownership and dependencies over broad rewrites.
+- Shared helpers must be narrowly named and narrowly scoped. Do not create generic catch-all utility files.
+- Add domain-specific architecture boundaries only if the repo clearly reveals them. Keep them short.
+
+Generated AGENTS.md structure:
+1. Scope And Precedence
+2. Project Profile
+3. Required Tools And Skills
+4. Architecture
+5. Framework Rules
+6. Verification
+
+Section guidance:
+
+Scope And Precedence:
+- State that the file governs the whole repo.
+- State that deeper AGENTS.md files override it for subdirectories.
+- State that system, developer, and direct user instructions take priority.
+- Keep it concise.
+
+Project Profile:
+- One short paragraph describing the repo type.
+- Do not list every target, command, file, or exploratory result.
+
+Required Tools And Skills:
+- Include only tools and skills relevant to the detected project type.
+- For Apple repos, mention Build iOS Apps and XcodeBuildMCP as preferred.
+- For Flutter repos, mention Build Flutter Apps and Dart/Flutter MCP tools as preferred.
+- Include required skills by name only.
+- State that fallback shell commands are only for when preferred tools are unavailable or fail.
+
+Architecture:
+- Include the exact focused architecture rule.
+- Include short project-specific boundaries if discovered.
+
+Framework Rules:
+- For SwiftUI repos, include only short, high-signal rules that are specific to this repo.
+- For Flutter repos, include only short, high-signal rules that are specific to this repo.
+- Do not paste skill rules.
+
+Verification:
+- Tell agents to use plugin/MCP verification first.
+- For Apple repos, prefer XcodeBuildMCP build/test/simulator flows.
+- For Flutter repos, prefer Dart/Flutter MCP analyze/test/run flows.
+- Use the narrowest meaningful verification.
+- If verification cannot be run, report the blocker and residual risk.
+- Do not include raw fallback commands unless there is no MCP/plugin path and the command is repo-documented.
+
+Output process:
+1. Briefly summarize what you discovered in the chat, not in AGENTS.md.
+2. Show the proposed AGENTS.md.
+3. Create or update the root AGENTS.md.
+4. Show the final AGENTS.md.
+5. Report unrelated existing git changes without modifying them.
+```
+
 ## Author
 
 Created by [shahid0](https://github.com/shahid0), an iOS app developer building practical AI-agent workflows for real mobile development.
-
