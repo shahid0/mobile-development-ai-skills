@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI Modern Reviewer"
+  short_description: "Review SwiftUI for Observation and Swift 6"
+  default_prompt: "Use $swiftui-modern-reviewer to review this SwiftUI view for modern Observation, concurrency, and architecture issues."

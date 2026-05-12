@@ -1,0 +1,3 @@
+interface:
+  display_name: "Flutter Dart Performance"
+  short_description: "Enforces performant Dart and Flutter architecture, state, isolates, rebuilds, gestures, animations, and identity."

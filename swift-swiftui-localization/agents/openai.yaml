@@ -1,0 +1,3 @@
+display_name: Swift SwiftUI Localization
+short_description: Localize SwiftUI with string catalogs
+default_prompt: Use this skill to audit and implement Swift/SwiftUI localization with LocalizedStringResource, String Catalogs, compiler extraction, and xcstringstool sync.

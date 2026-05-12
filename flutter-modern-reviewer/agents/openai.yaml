@@ -1,0 +1,5 @@
+interface:
+  display_name: "Flutter Modern Reviewer"
+  short_description: "Reviews and refactors modern Flutter widget-layer code."
+  icon: "code"
+  brand_color: "#02569B"
