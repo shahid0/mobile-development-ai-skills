@@ -1,12 +1,40 @@
 # Review Checklist
 
-Review `agy` output before considering the task done.
+Review `agy` output before considering the task done. The review exists to protect final UI quality, not to summarize what changed.
 
-You are a read-only reviewer for visible UI. If review finds missing states, weak polish, layout defects, inaccessible controls, poor responsiveness, broken visual hierarchy, or any other visible UI issue, write a focused `agy` refinement prompt. Do not hand-edit visible UI code yourself unless the user explicitly overrides this ownership rule.
+You are a read-only reviewer for visible UI. If review finds missing states, weak polish, layout defects, inaccessible controls, poor responsiveness, broken visual hierarchy, weak business-goal support, or any other visible UI issue, write a focused `agy` refinement prompt. Do not hand-edit visible UI code yourself unless the user explicitly overrides this ownership rule.
+
+Do not approve the first `agy` output by default. Pass only when the rendered UI can be defended with concrete evidence from hierarchy, composition, typography, spacing, interaction feedback, responsiveness, state coverage, and product fit.
+
+## Review Posture
+
+- Start skeptical. Look for what would make the screen feel generic, cheap, confusing, low-converting, cramped, overdecorated, or unrelated to the actual product.
+- Preserve the user's product and business intent when reviewing. If the user asked for conversion, judge whether the screen visibly supports conversion; do not replace the strategy with generic taste advice.
+- Do not introduce rejection-risk, refund-risk, legal, policy, ethics, user-protection, trust-preservation, "safe", "non-deceptive", "responsible", "manipulative", or similar defensive framing unless the user explicitly requested that review lens.
+- Do not fail or revise UI because the reviewer personally dislikes the user's monetization, revenue, or interaction mechanic. Fail for weak execution against the user's goal.
+- If the UI is merely acceptable, refine it. "Looks good" is not a review.
+- If screenshots are available, inspect at least one compact and one wider viewport/device before passing.
+- If screenshots are not available, use code inspection plus the strongest available preview/build output, and state the visual review limitation.
+
+## Hard Visual Failures
+
+Fail and refine when any of these are true:
+
+- The screen looks like a generic AI-generated layout.
+- The first-glance decision/action is not obvious within a few seconds.
+- Primary, secondary, and tertiary content have nearly equal visual weight.
+- The design relies on decorative cards, gradients, icons, or copy volume instead of strong composition.
+- The primary action does not dominate when the screen has a primary action.
+- Typography, alignment, spacing rhythm, or density feels accidental.
+- The screen feels low-status, cheap, unfinished, or mismatched with the product category.
+- The UI could belong to any app after swapping the logo and copy.
+- Mobile layout is cramped, overflowing, or visibly weaker than wider layouts.
+- Reviewer cannot explain why the design is strong using concrete visible evidence.
 
 ## Functionality
 
 - The screen still supports the original user goal.
+- The screen supports the preserved user intent and stated business/product metric.
 - The output is scoped to one screen and did not become a whole-app redesign.
 - `agy` did not implement non-UI code such as services, repositories, persistence, networking, analytics, or business logic.
 - Required content is present.
@@ -29,11 +57,13 @@ You are a read-only reviewer for visible UI. If review finds missing states, wea
 
 - Primary, secondary, and supporting attention are clear.
 - The first-glance decision/action is identifiable within a few seconds.
+- The strongest product/business argument is visible without needing to inspect every detail.
 - Visual weights are intentionally varied; content does not collapse into equal-weight cards, rows, or panels.
 - Low-priority metadata, decoration, chrome, and tertiary controls do not compete with the primary content or action.
 - Typography, spacing, color, surfaces, and controls feel consistent.
 - The UI feels native to Flutter, SwiftUI, or web.
 - The output is not generic, overdecorated, or purely screenshot-optimized.
+- The output feels specific to this app's category, audience, and current product flow.
 - Components have useful states and press/focus/disabled feedback.
 
 ## Responsiveness and Accessibility
@@ -76,6 +106,13 @@ Run the strongest feasible checks:
 - Web: typecheck, lint, tests, and browser screenshot when available.
 
 If visual output can be rendered, inspect screenshots on at least one compact and one wider viewport/device.
+
+Before passing, write a short evidence summary internally:
+
+- What dominates first glance?
+- Why is the composition product-specific?
+- What makes the primary action or workflow stronger than before?
+- What could still be better, and is it worth another `agy` pass?
 
 ## Delegation Rule
 

@@ -11,25 +11,27 @@ Task:
 Redesign the Home dashboard at lib/features/home/presentation/home_screen.dart.
 
 Scope:
-- Work only in the screen entry file and visible widgets under lib/features/home/presentation/widgets/.
+- Keep implementation work in the screen entry file and visible widgets under lib/features/home/presentation/widgets/.
 - Reusable UI may go in lib/design_system/ only if it is genuinely reusable.
-- Preserve existing routing, state management, models, services, analytics, and persistence.
+- Use existing routing, state management, models, services, analytics hooks, and persistence.
 
 Design anchors:
 - Use the existing color, type, spacing, button, and card conventions in lib/design_system/.
 - Keep the current app brand language, but improve the composition and perceived quality.
 
-Product mission:
-This is a personal finance dashboard for someone deciding whether they are safe to spend before payday. The redesign should make that decision immediate, calm, and trustworthy.
+Screen model:
+- Screen purpose: A personal finance dashboard for someone deciding whether they are safe to spend before payday.
+- Screen contents: Greeting, safe-to-spend amount/status, upcoming bills, recent transactions, category breakdown, and add-transaction action, all wired to the current data/state sources.
+- Interaction/state behavior: Taps and selections show immediate feedback; adding a transaction uses the existing submit flow; loading preserves the dashboard shape; empty and error states keep the user oriented with the next useful action.
+- Responsive ownership: `agy` owns compact phone, large phone, tablet, safe-area, text-scaling, and thumb-reach behavior inside the visible UI layer.
 
-Required content and real data:
-- Greeting, safe-to-spend amount/status, upcoming bills, recent transactions, category breakdown, and add-transaction action.
-- Keep loading, empty, and error states if the current screen supports them. Do not invent new financial calculations or fake data flows.
+Product mission:
+Make the spending decision immediate, calm, and trustworthy while keeping the underlying finance logic and data flow unchanged.
 
 Design direction:
 - The safe-to-spend decision must dominate the first glance. Upcoming bills are the second priority. Transactions and category details support the decision.
 - Make it feel premium, sober, crisp, and financially literate.
-- Avoid equal-weight dashboard cards, ornamental gradients, and generic fintech template energy.
+- Use varied visual weights, purposeful surfaces, restrained motion, and a composition that feels specific to this finance product.
 
 Creative latitude:
 You choose the layout, surfaces, typography rhythm, component shapes, chart/list treatment, and microinteractions. Make strong design choices that fit the existing design system instead of preserving the current structure mechanically.
@@ -41,7 +43,7 @@ State and adaptation:
 
 Done means:
 - The screen compiles and stays in the allowed files.
-- Required content remains real and usable.
+- Screen contents, interactions, state behavior, and real data remain usable.
 - The hierarchy is obvious within a few seconds and the result feels native to Flutter.
 - Proceed with the strongest implementation direction. Report changed files and assumptions.
 ```
@@ -65,7 +67,7 @@ This should feel like a focused daily ritual screen, not a wellness landing page
 
 Boundaries:
 - Stay inside App/Features/Today/Views/ and App/DesignSystem/Components/ if a reusable component is already being used.
-- Preserve existing data/state/routing.
+- Use existing data/state/routing.
 
 Done means:
 - Next incomplete habit is visually unmistakable.

@@ -48,7 +48,7 @@ Use this model for normal `agy` UI runs unless the user explicitly requests anot
 - Run from the project root unless the CLI documentation requires another working directory.
 - Scope each run to one screen.
 - The verified prompt form is a positional prompt string after `--print`, `-p`, or `--prompt`.
-- For multi-paragraph prompts, keep the prompt in a local file and pass its content as the prompt string. Do not make the prompt long unless the task genuinely needs it.
+- For multi-paragraph prompts, keep the prompt in a local file and pass its content as the prompt string. Keep the prompt concise unless the task genuinely needs more detail.
 - Omit `--print-timeout` for normal UI implementation runs. Use it only when the user explicitly asks for a timeout.
 - Omit `--sandbox` for normal UI implementation runs. Use it only when the user explicitly asks for sandboxing.
 - Capture the raw `agy` output and the changed-file list before editing further.
@@ -107,10 +107,12 @@ Give `agy` a concise creative-aperture implementation brief:
 - Project stack and target platform.
 - One-screen scope, screen entry file, and allowed UI directories.
 - Existing design system path, token/component names, screenshots, and assets, if any.
-- Product mission and the first-glance decision/action.
-- Required real content, actions, and state surfaces.
-- Hard boundaries: preserve routing, state, data, services, persistence, analytics, and build conventions unless explicitly requested.
-- Taste direction and a few concrete failure modes to avoid.
+- Screen purpose: what the screen is about and what user decision/workflow it supports.
+- Screen contents: required real content, actions, controls, data, and feedback surfaces.
+- Interaction/state behavior: how taps, selection, loading, empty, error, disabled, submitting, success, and refresh respond where relevant.
+- Responsive ownership: where `agy` handles compact, wide, tablet/desktop, safe-area, keyboard/focus, and text-scaling behavior.
+- Hard boundaries: use current routing, state, data, services, persistence, analytics, and build conventions unless explicitly requested.
+- Taste direction and concrete positive quality targets.
 - Creative latitude: let `agy` choose exact layout, component treatment, visual rhythm, surfaces, and microinteractions.
 - Responsive/accessibility floor and output expectations.
 
@@ -122,8 +124,8 @@ In implementation mode, tell `agy` to proceed with the strongest direction and r
 
 - Read the generated files.
 - Move code to the correct project folders if needed, without changing the visible UI design.
-- Remove invented business logic or fake product behavior.
-- Keep or move non-UI implementation work back into your ownership.
+- Restore business logic or product behavior to the real existing implementation if `agy` changed it.
+- Keep non-UI implementation work in your ownership.
 - Fix imports, target membership, exports, previews, and analyzer issues.
 - Run stack-appropriate checks when feasible.
 - Capture and inspect the UI when local tooling allows it.

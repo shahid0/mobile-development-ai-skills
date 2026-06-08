@@ -1,4 +1,4 @@
 interface:
   display_name: "Agy UI Director V2"
-  short_description: "Write creative agy UI briefs with strong taste"
-  default_prompt: "Use $agy-ui-director-v2 to inspect this app, brief agy with a concise creative-aperture UI direction, run it, verify the result, and refine."
+  short_description: "Operate agy from rough intent to strong UI"
+  default_prompt: "Use $agy-ui-director-v2 as a quality-first agy operator: inspect the app, gather useful context, transform my rough intent into a decisive brief, run agy, review the visible UI harshly, and refine until the result is genuinely strong."
