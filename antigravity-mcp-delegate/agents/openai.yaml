@@ -1,3 +1,0 @@
-display_name: Antigravity MCP Delegate
-short_description: Delegate prompts through Antigravity MCP.
-default_prompt: Use ask_antigravity for this bounded delegation, then review and verify the result before accepting it.

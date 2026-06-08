@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agy UI Director"
+  short_description: "Direct agy toward premium app UI output"
+  default_prompt: "Use $agy-ui-director to redesign this Flutter or SwiftUI screen through a precise agy implementation brief."
