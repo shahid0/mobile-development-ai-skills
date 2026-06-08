@@ -5,6 +5,18 @@ description: Implement, audit, and maintain localization in Swift and SwiftUI ap
 
 # Swift + SwiftUI Localization
 
+
+## Swift Concurrency Reference
+
+When a task involves Swift concurrency, async work, SwiftUI state/isolation, `@MainActor`, actors, `Sendable`, `@Observable`, `.task`, task lifecycle, SwiftUI `@Sendable` closures, actor-related performance/memory issues, App Intent execution, UIKit/AppKit handoff, or Swift 6 migration, read `references/swiftui-concurrency-default-isolation.md` before advising or editing.
+
+Apply that reference's default-actor-isolation rules explicitly:
+- Inspect `SWIFT_DEFAULT_ACTOR_ISOLATION` or SwiftPM `.defaultIsolation(...)` when project settings are available.
+- In `MainActor`-default app/UI targets, opt non-UI services/workers out with `nonisolated` and use `@concurrent` for expensive worker entrypoints.
+- In `nonisolated`-default targets, mark UI stores, coordinators, and UI framework bridges `@MainActor` explicitly.
+- Treat `Task {}` from SwiftUI as an async context, not as proof of background execution.
+- Use Sendable value snapshots across SwiftUI `@Sendable` closures, tasks, actors, and worker boundaries.
+
 This file is the routing entry point. Load the smallest reference that matches the task before changing code.
 
 ## Reference Routing

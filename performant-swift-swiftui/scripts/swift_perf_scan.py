@@ -5,7 +5,7 @@ Swift + SwiftUI performance scanner.
 This script flags common AI-generated Swift anti-patterns:
 - heavy synchronous work inside plain Task { }
 - overbroad @MainActor isolation
-- missing Task.detached / @concurrent worker boundaries
+- missing Task { @concurrent in ... } / @concurrent worker boundaries
 - Observation macro misuse
 - SwiftUI identity, animation, gesture, and body recomputation smells
 
@@ -213,7 +213,7 @@ def scan_file(file_name: str, text: str) -> List[Finding]:
                 file_name,
                 line_number(text, match.start()),
                 "Synchronous heavy work appears inside plain Task { }. This may still run on the caller actor, including MainActor from SwiftUI.",
-                "Move heavy work into Task.detached(priority: .userInitiated) { ... }.value or a @concurrent worker function. The Task may remain only as the UI orchestration shell.",
+                "Move heavy work into Task(priority: .userInitiated) { @concurrent in ... } or a @concurrent worker function. The Task may remain only as the UI orchestration shell.",
                 block[:500],
             )
 
@@ -228,7 +228,7 @@ def scan_file(file_name: str, text: str) -> List[Finding]:
                 file_name,
                 line_number(text, match.start()),
                 "Heavy work appears inside MainActor.run.",
-                "Only final UI state mutation belongs in MainActor.run. Move decode/sort/parse/image work to Task.detached or @concurrent first.",
+                "Only final UI state mutation belongs in MainActor.run. Move decode/sort/parse/image work to Task { @concurrent in ... } or @concurrent worker APIs first.",
                 block[:500],
             )
 
@@ -263,15 +263,15 @@ def scan_file(file_name: str, text: str) -> List[Finding]:
             )
 
     # Global missing boundary hint for files with heavy operations but no explicit off-actor worker.
-    if has_heavy_work(text) and "Task.detached" not in text and "@concurrent" not in text:
+    if has_heavy_work(text) and "@concurrent" not in text:
         add(
             findings,
             "medium",
             "no-explicit-cpu-worker-boundary",
             file_name,
             1,
-            "File contains likely CPU-heavy synchronous operations but no Task.detached or @concurrent worker boundary.",
-            "Verify where the work executes. If triggered from SwiftUI/MainActor, add Task.detached(priority: .userInitiated) or @concurrent worker APIs.",
+            "File contains likely CPU-heavy synchronous operations but no Task { @concurrent in ... } or @concurrent worker boundary.",
+            "Verify where the work executes. If triggered from SwiftUI/MainActor, add Task(priority: .userInitiated) { @concurrent in ... } or @concurrent worker APIs.",
             "",
         )
 

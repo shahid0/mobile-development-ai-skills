@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project File Structure"
+  short_description: "Place code in correct folders and targets"
+  default_prompt: "Use $project-file-structure to place new or moved files in the right folders, modules, targets, and test layout."
+
+policy:
+  allow_implicit_invocation: true

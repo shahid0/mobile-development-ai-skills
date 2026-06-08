@@ -1,0 +1,4 @@
+interface:
+  display_name: "App Icon Imagegen"
+  short_description: "Generate ASO-ready app icons from a project"
+  default_prompt: "Use $app-icon-imagegen with $imagegen to create three ASO-ready app icon concepts for this project."

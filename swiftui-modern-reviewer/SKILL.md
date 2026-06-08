@@ -1,55 +1,78 @@
 ---
 name: swiftui-modern-reviewer
-description: Use when writing, reviewing, or refactoring SwiftUI views for iOS 17+/macOS 14+ codebases that should use Apple's Observation framework, Swift 6 concurrency, structured view lifecycles, dependency injection, previewability, and strict separation between UI composition and side effects. Trigger for SwiftUI code review, SwiftUI architecture cleanup, migration away from ObservableObject/@Published/@StateObject/@ObservedObject/@EnvironmentObject, or requests to enforce modern Apple SwiftUI standards.
+description: Use when writing, reviewing, or refactoring SwiftUI views for iOS 17+/macOS 14+ codebases that should use Apple's Observation framework, Swift 6 concurrency, structured view lifecycles, dependency injection, previewability, animation performance, and strict separation between UI composition and side effects. Trigger for SwiftUI code review, SwiftUI architecture cleanup, animation jank/stutter/lag, migration away from ObservableObject/@Published/@StateObject/@ObservedObject/@EnvironmentObject, or requests to enforce modern Apple SwiftUI standards.
 ---
 
 # SwiftUI Modern Reviewer
 
-## Purpose
 
-Act as a strict SwiftUI reviewer for modern Apple-platform apps. Treat the view layer as declarative UI: views describe state, bind user intent, and delegate work to observable models, coordinators, actors, services, or app/scene-level infrastructure.
+## Swift Concurrency Reference
 
-Default baseline: iOS 17+, macOS 14+, Swift 6 language mode, and Observation. If the user states an older deployment target or compatibility constraint, call it out and adapt the recommendation without silently weakening the standard.
+When a task involves Swift concurrency, async work, SwiftUI state/isolation, `@MainActor`, actors, `Sendable`, `@Observable`, `.task`, task lifecycle, SwiftUI `@Sendable` closures, actor-related performance/memory issues, App Intent execution, UIKit/AppKit handoff, or Swift 6 migration, read `references/swiftui-concurrency-default-isolation.md` before advising or editing.
 
-## Required Workflow
+Apply that reference's default-actor-isolation rules explicitly:
+- Inspect `SWIFT_DEFAULT_ACTOR_ISOLATION` or SwiftPM `.defaultIsolation(...)` when project settings are available.
+- In `MainActor`-default app/UI targets, opt non-UI services/workers out with `nonisolated` and use `@concurrent` for expensive worker entrypoints.
+- In `nonisolated`-default targets, mark UI stores, coordinators, and UI framework bridges `@MainActor` explicitly.
+- Treat `Task {}` from SwiftUI as an async context, not as proof of background execution.
+- Use Sendable value snapshots across SwiftUI `@Sendable` closures, tasks, actors, and worker boundaries.
 
-1. Identify the view's dependencies, state ownership, side effects, async work, formatting, navigation, and previews before proposing changes.
-2. Apply the checklist in [references/review-checklist.md](references/review-checklist.md). Load it for non-trivial reviews or any implementation/refactor task.
-3. Prefer small, behavior-preserving refactors that move work out of `body`, clarify ownership, and make dependencies explicit.
-4. When reviewing, report findings first, ordered by severity, with precise file/line references. Treat violations as code smells even if the app currently works.
-5. When editing, update or add previews/stubs that prove the view can render without real services, files, permissions, or network calls.
-6. Verify with build/tests when a project is available. For iOS apps, prefer the Build iOS Apps toolchain when simulator build or runtime validation is needed.
+## Use This Skill When
 
-## Enforcement Priorities
+- Reviewing, writing, or refactoring SwiftUI view-layer code.
+- Migrating SwiftUI code from Combine observation to Observation.
+- Investigating SwiftUI animation lag, delayed transitions, jank, hangs, gesture stutter, or expensive effects.
+- Checking Swift 6 concurrency, worker boundaries, lifecycle-bound async work, SwiftData usage, accessibility, gestures, layout performance, modern API adoption, image handling, localization, dependency injection, previews, navigation, formatting, or body purity.
+- Reviewing presentation state, loading/empty/error states, reusable component API surface, search/focus/input flows, responsive text/layout, charts, macOS/multiplatform UI, or testing hygiene.
 
-- `body` must remain a pure description of UI for current state. No fetching, logging, analytics, permission prompts, global mutations, object setup with side effects, or state mutation as a render side effect.
-- Views may own lightweight transient UI state. Side-effectful resources belong in `@Observable` models, actors, coordinators, services, or app/scene layers.
-- New Observation code uses `@Observable`, `@State` for view-owned observable models, plain stored properties for received models, `@Environment(MyType.self)` for environment models, and `@Bindable` only when bindings to observable properties are needed.
-- New code must not introduce `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, or `@EnvironmentObject` unless an explicit compatibility constraint requires legacy Combine observation.
-- SwiftUI async work should use `.task {}` or `.task(id:)` for lifecycle-bound work. Avoid unstructured `Task {}`, `Task.detached`, and `DispatchQueue` in views.
-- User-relevant errors need an intentional visible path: alert, inline state, error screen, retry, or delegated recovery state. Empty catches and careless `try?` are findings.
-- Dependencies must be injectable and visible from property declarations. No hidden global singletons in views.
-- Formatting should use `Text(value, format:)`, `Text(date, style:)`, reusable `FormatStyle`, or cached/static formatters. Never instantiate formatters per render or per cell.
-- Large views should be decomposed into focused child views, `@ViewBuilder` properties, or modifiers only when doing so improves readability and keeps state ownership clear.
+## Start Here
 
-## Review Output
+1. For non-trivial code review or refactor work, load [references/review-checklist.md](references/review-checklist.md).
+2. For a local codebase, run the AIO preflight script:
 
-For code reviews, use this shape:
+```bash
+python3 scripts/swiftui_review_scan.py <path>
+```
 
-- Findings first, with severity and exact locations.
-- Open questions or compatibility assumptions.
-- Brief change summary only after findings.
-- Test/build gaps or residual risk.
+3. Treat script output as review routing and evidence gathering, not as final findings. Read the code before reporting issues.
 
-For refactors, keep changes scoped. Do not introduce a full architecture rewrite when a local extraction or injected observable model solves the issue.
+Script warning: the scanner is heuristic and can produce false positives and false negatives. Do not treat it as authoritative; use it to decide what to inspect, which references to load, and what evidence to verify manually.
 
-## Source Grounding
+## Shared Reference Components
 
-This skill is grounded in Apple's current Observation and SwiftUI guidance:
+Files under `references/shared/` are internal common components for topic references. Load them only when a topic reference points to them or when multiple topics repeat the same rule. Do not treat shared files as standalone review topics.
 
-- Apple documents `@Observable` as the macro that adds Observation support to custom types.
-- Apple's Observation migration guide recommends replacing `ObservableObject` with `@Observable`, removing `@Published`, using `@State` instead of `@StateObject`, and using `@Environment` instead of `@EnvironmentObject` for fully migrated iOS 17+/macOS 14+ code.
-- Apple documents `@Bindable` for creating bindings to mutable properties of observable objects.
-- WWDC23 "Discover Observation in SwiftUI" explains the wrapper decision model: `@State` for view-owned model state, `@Environment` for shared environment state, `@Bindable` for bindings, and plain properties when none of those apply.
+## Load References Progressively
 
-When the answer depends on newer SDK behavior, fetch Apple documentation or WWDC transcripts again before relying on memory.
+- Observation wrappers, model ownership, `@Observable`, `@Bindable`, or migration: [references/observation.md](references/observation.md)
+- `Task`, `.task`, lifecycle, Swift 6 concurrency, cancellation, or async errors: [references/concurrency-lifecycle.md](references/concurrency-lifecycle.md)
+- `@MainActor` services, repositories, decoders, processors, caches, `Task.detached`, or worker isolation: [references/concurrency-worker-boundaries.md](references/concurrency-worker-boundaries.md)
+- Services, singletons, app/system state, injection, previews, mocks, or missing `#Preview`: [references/dependency-injection-previews.md](references/dependency-injection-previews.md)
+- Body purity, lists, `ForEach`, identity, formatters, expensive display work, or view decomposition: [references/performance-formatting.md](references/performance-formatting.md)
+- SwiftData `@Model`, `@Query`, model context ownership, or `@ModelActor`: [references/swiftdata.md](references/swiftdata.md)
+- Accessibility labels, actions, representations, semantic actions, or VoiceOver behavior: [references/accessibility.md](references/accessibility.md)
+- Animation, `withAnimation`, transactions, gestures, transitions, effects, `matchedGeometryEffect`, `TimelineView`, `Canvas`, or jank/stutter: [references/animation-performance.md](references/animation-performance.md)
+- Replacing bad animation code with safer patterns, transform-based motion, scoped transactions, row-local animation, or gesture commit patterns: [references/animation-patterns.md](references/animation-patterns.md)
+- Gesture composition, `onTapGesture`, drag/update handlers, and semantic control patterns: [references/gesture-patterns.md](references/gesture-patterns.md)
+- `GeometryReader`, preferences, `onGeometryChange`, `ViewThatFits`, `AnyLayout`, custom `Layout`, or layout measurement: [references/layout-performance.md](references/layout-performance.md)
+- Navigation stacks, links, sheets, tabs, routers, coordinators, or deep links: [references/navigation-coordination.md](references/navigation-coordination.md)
+- Sheets, alerts, dialogs, popovers, detents, interactive dismissal, presentation booleans/items, or modal route ownership: [references/presentation-state.md](references/presentation-state.md)
+- Loading spinners, skeleton/redacted UI, empty states, errors, retry paths, or `ContentUnavailableView`: [references/loading-empty-error.md](references/loading-empty-error.md)
+- Reusable component inputs, bindings, environment assumptions, style hooks, and component review boundaries: [references/component-surface-review.md](references/component-surface-review.md)
+- `.searchable`, search scopes, focus state, submit behavior, text input, or keyboard flow: [references/search-focus-input.md](references/search-focus-input.md)
+- Dynamic Type, multiline text, truncation, fixed sizes, layout priority, or responsive copy: [references/responsive-text-layout.md](references/responsive-text-layout.md)
+- Swift Charts, marks, selections, chart proxies, accessibility, or chart performance: [references/charts-review.md](references/charts-review.md)
+- macOS, multiplatform scenes/windows, `MenuBarExtra`, `Table`, split views, AppKit bridges, or file import/export: [references/macos-multiplatform.md](references/macos-multiplatform.md)
+- Tests, previews as test fixtures, flaky async assertions, UI coverage, or regression hygiene: [references/testing-hygiene.md](references/testing-hygiene.md)
+- Deprecated or replaced SwiftUI APIs such as `foregroundColor`, `accentColor`, or `NavigationView`: [references/modern-api.md](references/modern-api.md)
+- Image decoding, `UIImage(data:)`, `CGImageSource`, thumbnails, or downsampling: [references/image-performance.md](references/image-performance.md)
+- `Text`, string literals, `LocalizedStringResource`, `String(localized:)`, and localization review: [references/localization-text.md](references/localization-text.md)
+- Apple/source citations, current SDK behavior, or version-sensitive claims: [references/source-grounding.md](references/source-grounding.md)
+
+## Optional Fresh Research
+
+When current sources are needed, prefer PWM with Sonnet thinking detailed research:
+
+```bash
+pwm ask -m claude_sonnet --thinking --intent detailed -s web "Research current Apple SwiftUI best practices for <topic>. Prefer Apple documentation, WWDC sessions, and authoritative SwiftUI performance/concurrency/Observation sources. Return actionable review rules, severe finding patterns, false-positive caveats, and citation URLs."
+```

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple Idiomatic Development"
+  short_description: "Build Apple-native SwiftUI apps"
+  default_prompt: "Use $apple-idiomatic-development to build or review an iOS/iPadOS app with Swift 6, SwiftUI, Metal shaders, animation, and Apple-source-backed engineering."

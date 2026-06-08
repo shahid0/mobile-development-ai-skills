@@ -6,8 +6,8 @@ Use this reference when reviewing or writing Swift code that may run from SwiftU
 
 A plain `Task {}` starts a task. It does not prove that synchronous work left the caller actor. CPU-heavy synchronous work must have an explicit boundary:
 
-- `Task.detached(priority: .userInitiated) { ... }.value`
-- `@concurrent func worker(...) async throws -> Output` on toolchains that support `@concurrent`
+- `Task(priority: .userInitiated) { @concurrent in ... }` for UI-triggered background work
+- `@concurrent func worker(...) async throws -> Output`
 - actor methods for shared mutable non-UI state, not for CPU parallelism by themselves
 
 ## Work classification
@@ -15,35 +15,46 @@ A plain `Task {}` starts a task. It does not prove that synchronous work left th
 | Work | Preferred shape |
 |---|---|
 | URLSession request | pure async I/O service |
-| JSON decode of nontrivial payload | `Task.detached` or `@concurrent` worker |
-| sorting/filtering/mapping large arrays | `Task.detached` or `@concurrent` worker |
-| image decoding/resizing/downsampling | `Task.detached` or `@concurrent` worker |
-| search indexing / diff building | `Task.detached`, `@concurrent`, or specialized worker |
+| JSON decode of nontrivial payload | `Task { @concurrent in ... }` or `@concurrent` worker |
+| sorting/filtering/mapping large arrays | `Task { @concurrent in ... }` or `@concurrent` worker |
+| image decoding/resizing/downsampling | `Task { @concurrent in ... }` or `@concurrent` worker |
+| search indexing / diff building | `Task { @concurrent in ... }`, `@concurrent`, or specialized worker |
 | cache mutation | actor |
 | token/session mutable state | actor |
 | SwiftData background work | `@ModelActor` or persistence-specific isolation |
 | UI state mutation | `@MainActor` |
 
-## `Task.detached` pattern
+## `Task { @concurrent in ... }` pattern
 
-Use for a one-off synchronous CPU block.
+Use for UI-triggered background work that must not inherit main-actor execution.
 
 ```swift
-struct FeedPipeline: Sendable {
-    func makeRows(from data: Data) async throws -> [FeedRow] {
-        try await Task.detached(priority: .userInitiated) {
+@MainActor
+@Observable
+final class FeedStore {
+    var rows: [FeedRow] = []
+    private let data: Data
+
+    func rebuild() {
+        let snapshot = data
+
+        Task(priority: .userInitiated) { @concurrent in
             try Task.checkCancellation()
 
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            let dtos = try decoder.decode([FeedDTO].self, from: data)
+            let dtos = try decoder.decode([FeedDTO].self, from: snapshot)
 
             try Task.checkCancellation()
 
-            return dtos
+            let output = dtos
                 .sorted { $0.date > $1.date }
                 .map(FeedRow.init)
-        }.value
+
+            await MainActor.run {
+                self.rows = output
+            }
+        }
     }
 }
 ```
@@ -52,7 +63,7 @@ struct FeedPipeline: Sendable {
 
 - Pass value snapshots in.
 - Return value results out.
-- Avoid capturing `self` from UI objects.
+- Touch `self` only when returning to `MainActor`.
 - Keep dependencies immutable or `Sendable`.
 - Check cancellation before and after expensive phases.
 
@@ -85,9 +96,12 @@ final class Store {
         let input = rows
         let pipeline = pipeline
 
-        Task(priority: .userInitiated) { [weak self] in
+        Task(priority: .userInitiated) { @concurrent [weak self] in
             let output = await pipeline.sortRows(input)
-            self?.rows = output
+
+            await MainActor.run {
+                self?.rows = output
+            }
         }
     }
 }
@@ -106,45 +120,13 @@ struct RowPipeline: Sendable {
 }
 ```
 
-If target/toolchain support is unclear, either ask for the Swift version or provide a `Task.detached` fallback.
+If target/toolchain support is unclear, ask for the Swift version or keep the worker API as an explicitly non-main-actor path. Do not silently fall back to `Task.detached`.
 
-## Reusable worker helper
+## `Task.detached` review smell
 
-A skill user may prefer a helper to make detached boundaries consistent:
+`Task.detached()` is often a bad idea. Check any usage extremely carefully. It should not be the default pattern for background work.
 
-```swift
-enum UserInitiatedWorker {
-    static func run<T: Sendable>(
-        _ operation: @escaping @Sendable () throws -> T
-    ) async throws -> T {
-        let task = Task.detached(priority: .userInitiated) {
-            try Task.checkCancellation()
-            let result = try operation()
-            try Task.checkCancellation()
-            return result
-        }
-
-        return try await withTaskCancellationHandler {
-            try await task.value
-        } onCancel: {
-            task.cancel()
-        }
-    }
-}
-```
-
-Use it like:
-
-```swift
-struct FeedPipeline: Sendable {
-    func makeRows(from data: Data) async throws -> [FeedRow] {
-        try await UserInitiatedWorker.run {
-            let dtos = try JSONDecoder().decode([FeedDTO].self, from: data)
-            return dtos.sorted { $0.date > $1.date }.map(FeedRow.init)
-        }
-    }
-}
-```
+When found, verify that it has a documented reason, does not capture UI state or non-Sendable references, preserves cancellation and priority intentionally, and returns value data back to the UI actor.
 
 ## Priority guidance
 

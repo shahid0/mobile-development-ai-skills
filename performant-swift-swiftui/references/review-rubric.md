@@ -20,7 +20,7 @@ Actionable fixes in priority order.
 Code snippets or a diff-style patch.
 
 ## Async execution labels
-List each important async function and whether it is @MainActor, pure async I/O, @concurrent, Task.detached, actor-isolated, or still on the caller actor.
+List each important async function and whether it is @MainActor, pure async I/O, @concurrent, Task { @concurrent in ... }, Task.detached review smell, actor-isolated, or still on the caller actor.
 
 ## Scanner findings
 Summarize scanner output if the script was run.
@@ -50,7 +50,7 @@ Summarize scanner output if the script was run.
 When patching, preserve the user's intent and public API where practical, but change architecture when necessary:
 
 1. Pull CPU-heavy code into a `Sendable` worker or pipeline.
-2. Add `@concurrent` if the target supports it; otherwise use `Task.detached` internally.
+2. Add `@concurrent` worker APIs or `Task { @concurrent in ... }` for UI-triggered background work. Do not use `Task.detached` as the default fallback.
 3. Keep the UI store `@MainActor @Observable` only if it is true UI state.
 4. Convert row data to value models where possible.
 5. Add cancellation handling around stored tasks.

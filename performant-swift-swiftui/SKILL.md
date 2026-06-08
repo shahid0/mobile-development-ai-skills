@@ -5,6 +5,18 @@ description: review, write, and refactor performant swift and swiftui code. use 
 
 # Performant Swift + SwiftUI
 
+
+## Swift Concurrency Reference
+
+When a task involves Swift concurrency, async work, SwiftUI state/isolation, `@MainActor`, actors, `Sendable`, `@Observable`, `.task`, task lifecycle, SwiftUI `@Sendable` closures, actor-related performance/memory issues, App Intent execution, UIKit/AppKit handoff, or Swift 6 migration, read `references/swiftui-concurrency-default-isolation.md` before advising or editing.
+
+Apply that reference's default-actor-isolation rules explicitly:
+- Inspect `SWIFT_DEFAULT_ACTOR_ISOLATION` or SwiftPM `.defaultIsolation(...)` when project settings are available.
+- In `MainActor`-default app/UI targets, opt non-UI services/workers out with `nonisolated` and use `@concurrent` for expensive worker entrypoints.
+- In `nonisolated`-default targets, mark UI stores, coordinators, and UI framework bridges `@MainActor` explicitly.
+- Treat `Task {}` from SwiftUI as an async context, not as proof of background execution.
+- Use Sendable value snapshots across SwiftUI `@Sendable` closures, tasks, actors, and worker boundaries.
+
 ## Purpose
 
 Use this skill to write or review production-quality Swift and SwiftUI code. Treat SwiftUI as the rendering and interaction layer, and Swift as the work layer for concurrency, value modeling, actors, parsing, image processing, persistence, and performance boundaries.
@@ -35,11 +47,19 @@ The core rule is: SwiftUI may start work, but Swift workers must do work. A plai
    - `@MainActor UI state mutation`
    - `pure async I/O`
    - `@concurrent CPU worker`
-   - `Task.detached CPU worker`
+   - `Task.detached review smell`
    - `actor-isolated shared state`
    - `stays on caller actor` if no boundary is used
 
 ## Non-negotiable rules
+
+### Default actor isolation
+
+Before judging a SwiftUI hang or adding annotations, inspect the target's concurrency settings. In Swift 6.2 / Xcode 26-era projects, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` or SwiftPM `.defaultIsolation(MainActor.self)` can make unannotated declarations main-actor isolated.
+
+That means a plain-looking service method can still execute in the UI lane when called from SwiftUI. Also, `nonisolated async` is not automatically a background boundary under approachable-concurrency behavior; if work must leave the caller actor, use `@concurrent` or `Task { @concurrent in ... }`.
+
+Review every `.task`, button action, gesture callback, and `Task {}` from a SwiftUI view or `@MainActor` store for inherited main-actor execution. The worker boundary must be visible in the API or task body.
 
 ### Main actor
 
@@ -66,18 +86,19 @@ struct FeedDecoder: Sendable { }
 
 Any synchronous CPU-heavy work triggered from SwiftUI, a gesture, `.task`, a button action, or a `@MainActor` store must cross an explicit worker boundary.
 
-Use either:
+Prefer the Swift background-work pattern:
 
 ```swift
-try await Task.detached(priority: .userInitiated) {
-    try Task.checkCancellation()
-    let output = try expensiveSynchronousWork(input)
-    try Task.checkCancellation()
-    return output
-}.value
+Task(priority: .userInitiated) { @concurrent in
+    let output = try await worker.expensiveSynchronousWork(input)
+
+    await MainActor.run {
+        self.output = output
+    }
+}
 ```
 
-or, when the Swift toolchain supports it:
+For reusable worker APIs, make the off-main-actor boundary explicit:
 
 ```swift
 @concurrent
@@ -96,9 +117,9 @@ Task {
 }
 ```
 
-### Detached worker safety
+### Detached worker review smell
 
-When using `Task.detached`:
+Avoid `Task.detached` for normal background work. Prefer `Task { @concurrent in ... }`, `@concurrent` worker APIs, task groups, or actors depending on the work. If existing code uses `Task.detached`, review it as a risk:
 
 - pass `Sendable` value snapshots into the worker
 - return `Sendable` value results
@@ -120,9 +141,14 @@ Good:
 
 ```swift
 let input = rows
-let output = await Task.detached(priority: .userInitiated) {
-    input.map(transform)
-}.value
+
+Task(priority: .userInitiated) { @concurrent in
+    let output = input.map(transform)
+
+    await MainActor.run {
+        self.rows = output
+    }
+}
 ```
 
 ### Observation
@@ -200,10 +226,11 @@ Swift Services
   not @Observable
   not @MainActor
   expose async APIs for I/O
+  explicitly opt out of MainActor-default targets when they do non-UI work
 
 Swift Workers / Pipelines
   Sendable where possible
-  use @concurrent or Task.detached for CPU-heavy synchronous work
+  use @concurrent worker APIs or Task { @concurrent in ... } for CPU-heavy synchronous work
   return value snapshots
 
 Swift Actors
@@ -239,13 +266,13 @@ For reviews, use this structure:
 [include script results if run]
 ```
 
-For code generation, include only code that follows this skill. If the target Swift version is unknown and `@concurrent` compatibility may matter, either ask for the toolchain if absolutely necessary or provide a `Task.detached` fallback.
+For code generation, include only code that follows this skill. Prefer `Task { @concurrent in ... }` for UI-triggered background work and `@concurrent` worker APIs for reusable CPU work. Do not provide a `Task.detached` fallback unless the user explicitly asks for legacy compatibility.
 
 ## References
 
 Load these only when needed:
 
-- `references/concurrency-boundaries.md` for `Task.detached`, `@concurrent`, priorities, cancellation, and worker APIs.
+- `references/concurrency-boundaries.md` for `Task { @concurrent in ... }`, `@concurrent`, priorities, cancellation, worker APIs, and `Task.detached` review risks.
 - `references/observation-and-state.md` for `@Observable`, `@ObservationIgnored`, `@Bindable`, `@State`, environment, and SwiftData macro usage.
 - `references/swiftui-interactions.md` for gestures, transitions, animation scope, identity, `matchedGeometryEffect`, and laggy views.
 - `references/review-rubric.md` for code review structure and anti-agent smell checks.
